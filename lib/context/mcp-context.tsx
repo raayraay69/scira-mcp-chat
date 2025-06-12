@@ -1,9 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useRef } from "react";
+import React, { createContext, useContext, useRef, useEffect } from "react";
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { startSandbox, stopSandbox } from "@/app/actions";
+import { MODES } from "../modes";
+import { nanoid } from "nanoid";
 
 // Define types for MCP server
 export interface KeyValuePair {
@@ -40,6 +42,8 @@ interface MCPContextType {
   setMcpServers: (servers: MCPServer[]) => void;
   selectedMcpServers: string[];
   setSelectedMcpServers: (serverIds: string[]) => void;
+  mode: string;
+  setMode: (mode: string) => void;
   mcpServersForApi: MCPServerApi[];
   startServer: (serverId: string) => Promise<boolean>;
   stopServer: (serverId: string) => Promise<boolean>;
@@ -85,12 +89,40 @@ export function MCPProvider({ children }: { children: React.ReactNode }) {
   );
   
   const [selectedMcpServers, setSelectedMcpServers] = useLocalStorage<string[]>(
-    STORAGE_KEYS.SELECTED_MCP_SERVERS, 
+    STORAGE_KEYS.SELECTED_MCP_SERVERS,
     []
   );
-  
+
+  const [mode, setMode] = useLocalStorage<string>(STORAGE_KEYS.MODE, 'default');
+
   // Create a ref to track active servers and avoid unnecessary re-renders
   const activeServersRef = useRef<Record<string, boolean>>({});
+
+  // Ensure default servers for the selected mode exist
+  useEffect(() => {
+    const modeConfig = MODES.find(m => m.id === mode);
+    if (!modeConfig) return;
+
+    setMcpServers(current => {
+      const updated = [...current];
+      const urlToId = new Map<string, string>();
+      updated.forEach(s => urlToId.set(s.url, s.id));
+
+      const newIds: string[] = [];
+      modeConfig.defaultServers.forEach(server => {
+        let id = urlToId.get(server.url);
+        if (!id) {
+          id = nanoid();
+          updated.push({ ...server, id, status: 'disconnected' });
+          urlToId.set(server.url, id);
+        }
+        newIds.push(id);
+      });
+
+      setSelectedMcpServers(prev => Array.from(new Set([...prev, ...newIds])));
+      return updated;
+    });
+  }, [mode, setMcpServers, setSelectedMcpServers]);
 
   // Helper to get a server by ID
   const getServerById = (serverId: string): MCPServer | undefined => {
@@ -259,11 +291,13 @@ export function MCPProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <MCPContext.Provider 
-      value={{ 
-        mcpServers, 
-        setMcpServers, 
-        selectedMcpServers, 
+      value={{
+        mcpServers,
+        setMcpServers,
+        selectedMcpServers,
         setSelectedMcpServers,
+        mode,
+        setMode,
         mcpServersForApi,
         startServer,
         stopServer,
