@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { MessageSquare, PlusCircle, Trash2, ServerIcon, Settings, Sparkles, ChevronsUpDown, Copy, Pencil, Github, Key } from "lucide-react";
+import { MessageSquare, PlusCircle, Trash2, ServerIcon, Settings, Sparkles, ChevronsUpDown, Copy, Pencil, Github, Key, Briefcase } from "lucide-react";
 import {
     Sidebar,
     SidebarContent,
@@ -25,6 +25,7 @@ import Image from "next/image";
 import { MCPServerManager } from "./mcp-server-manager";
 import { ApiKeyManager } from "./api-key-manager";
 import { ThemeToggle } from "./theme-toggle";
+import { ModePicker } from "./mode-picker";
 import { getUserId, updateUserId } from "@/lib/user-id";
 import { useChats } from "@/lib/hooks/use-chats";
 import { cn } from "@/lib/utils";
@@ -399,6 +400,15 @@ export function ChatSidebar() {
                                 }}>
                                     <Github className="mr-2 h-4 w-4 hover:text-sidebar-accent" />
                                     GitHub
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center">
+                                            <Briefcase className="mr-2 h-4 w-4 hover:text-sidebar-accent" />
+                                            Mode
+                                        </div>
+                                        <ModePicker className="h-6" />
+                                    </div>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                     <div className="flex items-center justify-between w-full">
